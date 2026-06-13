@@ -42,3 +42,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python Backend
+backend/venv/
+backend/__pycache__/
+backend/firebase_key.json
+*.pyc

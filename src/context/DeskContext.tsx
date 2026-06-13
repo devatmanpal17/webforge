@@ -2,13 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Desk, Session, User } from '../types';
+import { auth } from '../lib/firebase';
+import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 
 interface DeskContextType {
   desks: Desk[];
   activeSession: Session | null;
   currentUser: User | null;
   userRole: 'student' | 'librarian' | null;
-  login: (role: 'student' | 'librarian', userDetails?: Partial<User>) => void;
   logout: () => void;
   bookDesk: (deskId: string) => void;
   setAway: () => void;
@@ -19,20 +20,6 @@ interface DeskContextType {
   loading: boolean;
 }
 
-const DEFAULT_STUDENT: User = {
-  id: 'u1',
-  name: 'Sarah',
-  email: 'sarah@university.edu',
-  initials: 'SK',
-};
-
-const DEFAULT_LIBRARIAN: User = {
-  id: 'lib1',
-  name: 'Library Admin',
-  email: 'admin@library.edu',
-  initials: 'LA',
-};
-
 const DeskContext = createContext<DeskContextType | undefined>(undefined);
 
 export const DeskProvider = ({ children }: { children: ReactNode }) => {
@@ -41,26 +28,57 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
   const [userRole, setUserRole] = useState<'student' | 'librarian' | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [firebaseToken, setFirebaseToken] = useState<string | null>(null);
 
-  // Load auth state from local storage on mount
-  useEffect(() => {
-    const savedRole = localStorage.getItem('deskguard_role') as 'student' | 'librarian' | null;
-    if (savedRole) {
-      setUserRole(savedRole);
-      setCurrentUser(savedRole === 'student' ? DEFAULT_STUDENT : DEFAULT_LIBRARIAN);
+  // Helper to fetch with auth token
+  const fetchWithAuth = useCallback(async (url: string, options: RequestInit = {}) => {
+    const headers = new Headers(options.headers || {});
+    if (firebaseToken) {
+      headers.set('Authorization', `Bearer ${firebaseToken}`);
     }
+    return fetch(url, { ...options, headers });
+  }, [firebaseToken]);
+
+  // Auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
+      if (fbUser) {
+        const token = await fbUser.getIdToken();
+        setFirebaseToken(token);
+        
+        // We assume the role is saved in localStorage during login
+        const savedRole = localStorage.getItem('deskguard_role') as 'student' | 'librarian' | null;
+        const role = savedRole || 'student';
+        setUserRole(role);
+        
+        // Construct basic user info
+        const initials = fbUser.displayName 
+          ? fbUser.displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+          : fbUser.email?.substring(0, 2).toUpperCase() || 'U';
+          
+        setCurrentUser({
+          id: fbUser.uid,
+          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+          email: fbUser.email || '',
+          initials
+        });
+      } else {
+        setFirebaseToken(null);
+        setCurrentUser(null);
+        setUserRole(null);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = (role: 'student' | 'librarian', userDetails?: Partial<User>) => {
-    setUserRole(role);
-    localStorage.setItem('deskguard_role', role);
-    setCurrentUser(role === 'student' ? { ...DEFAULT_STUDENT, ...userDetails } : { ...DEFAULT_LIBRARIAN, ...userDetails });
-  };
-
-  const logout = () => {
-    setUserRole(null);
-    setCurrentUser(null);
-    localStorage.removeItem('deskguard_role');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem('deskguard_role');
+    } catch (error) {
+      console.error("Error signing out", error);
+    }
   };
 
   // ── Fetch all desks ──
@@ -85,7 +103,10 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
 
   // ── Fetch active session for current user ──
   const refreshSession = useCallback(async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      setActiveSession(null);
+      return;
+    }
     
     try {
       const res = await fetch(`/api/sessions?userId=${currentUser.id}`);
@@ -118,12 +139,13 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     };
     loadData();
-  }, [refreshDesks, refreshSession]);
+  }, [refreshDesks, refreshSession, firebaseToken]);
 
   // ── Actions ──
   const bookDesk = async (deskId: string) => {
+    if (!currentUser) return;
     try {
-      const res = await fetch('/api/sessions', {
+      const res = await fetchWithAuth('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id, deskId }),
@@ -133,7 +155,7 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
         await Promise.all([refreshDesks(), refreshSession()]);
       } else {
         const errData = await res.json();
-        console.error('Book desk failed:', errData.error);
+        console.error('Book desk failed:', errData.error || errData.detail);
       }
     } catch (err) {
       console.error('Failed to book desk:', err);
@@ -143,7 +165,7 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
   const setAway = async () => {
     if (!activeSession) return;
     try {
-      const res = await fetch(`/api/sessions/${activeSession.id}`, {
+      const res = await fetchWithAuth(`/api/sessions/${activeSession.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'away' }),
@@ -160,7 +182,7 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
   const returnFromAway = async () => {
     if (!activeSession) return;
     try {
-      const res = await fetch(`/api/sessions/${activeSession.id}`, {
+      const res = await fetchWithAuth(`/api/sessions/${activeSession.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'return' }),
@@ -177,7 +199,7 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
   const endSession = async () => {
     if (!activeSession) return;
     try {
-      const res = await fetch(`/api/sessions/${activeSession.id}`, {
+      const res = await fetchWithAuth(`/api/sessions/${activeSession.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'end' }),
@@ -192,13 +214,12 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const releaseDesk = async (deskId: string) => {
-    // Find the session for this desk — look through the API
     try {
       const deskRes = await fetch(`/api/desks/${deskId}`);
       const deskData = await deskRes.json();
 
       if (deskData.currentSession) {
-        const res = await fetch(`/api/sessions/${deskData.currentSession.id}/release`, {
+        const res = await fetchWithAuth(`/api/sessions/${deskData.currentSession.id}/release`, {
           method: 'POST',
         });
 
@@ -217,7 +238,6 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
       activeSession,
       currentUser,
       userRole,
-      login,
       logout,
       bookDesk,
       setAway,

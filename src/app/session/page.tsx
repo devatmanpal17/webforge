@@ -12,6 +12,28 @@ export default function ActiveSessionPage() {
   const [timeLeft, setTimeLeft] = useState('');
   const [progress, setProgress] = useState(100);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [promptTimeLeft, setPromptTimeLeft] = useState(300);
+
+  useEffect(() => {
+    if (!showPrompt) {
+      setPromptTimeLeft(300);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setPromptTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setShowPrompt(false);
+          endSession();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [showPrompt, endSession]);
 
   useEffect(() => {
     if (!activeSession) return;
@@ -184,7 +206,7 @@ export default function ActiveSessionPage() {
               </button>
             </div>
             <p className="text-xs text-gray-400 mt-6">
-              Auto-releasing in 04:59...
+              Auto-releasing in {Math.floor(promptTimeLeft / 60).toString().padStart(2, '0')}:{(promptTimeLeft % 60).toString().padStart(2, '0')}...
             </p>
           </div>
         </div>

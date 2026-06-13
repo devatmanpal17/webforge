@@ -6,7 +6,10 @@ import { Desk, Session, User } from '../types';
 interface DeskContextType {
   desks: Desk[];
   activeSession: Session | null;
-  currentUser: User;
+  currentUser: User | null;
+  userRole: 'student' | 'librarian' | null;
+  login: (role: 'student' | 'librarian', userDetails?: Partial<User>) => void;
+  logout: () => void;
   bookDesk: (deskId: string) => void;
   setAway: () => void;
   returnFromAway: () => void;
@@ -16,11 +19,18 @@ interface DeskContextType {
   loading: boolean;
 }
 
-const CURRENT_USER: User = {
+const DEFAULT_STUDENT: User = {
   id: 'u1',
   name: 'Sarah',
   email: 'sarah@university.edu',
   initials: 'SK',
+};
+
+const DEFAULT_LIBRARIAN: User = {
+  id: 'lib1',
+  name: 'Library Admin',
+  email: 'admin@library.edu',
+  initials: 'LA',
 };
 
 const DeskContext = createContext<DeskContextType | undefined>(undefined);
@@ -28,8 +38,30 @@ const DeskContext = createContext<DeskContextType | undefined>(undefined);
 export const DeskProvider = ({ children }: { children: ReactNode }) => {
   const [desks, setDesks] = useState<Desk[]>([]);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
-  const [currentUser] = useState<User>(CURRENT_USER);
+  const [userRole, setUserRole] = useState<'student' | 'librarian' | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Load auth state from local storage on mount
+  useEffect(() => {
+    const savedRole = localStorage.getItem('deskguard_role') as 'student' | 'librarian' | null;
+    if (savedRole) {
+      setUserRole(savedRole);
+      setCurrentUser(savedRole === 'student' ? DEFAULT_STUDENT : DEFAULT_LIBRARIAN);
+    }
+  }, []);
+
+  const login = (role: 'student' | 'librarian', userDetails?: Partial<User>) => {
+    setUserRole(role);
+    localStorage.setItem('deskguard_role', role);
+    setCurrentUser(role === 'student' ? { ...DEFAULT_STUDENT, ...userDetails } : { ...DEFAULT_LIBRARIAN, ...userDetails });
+  };
+
+  const logout = () => {
+    setUserRole(null);
+    setCurrentUser(null);
+    localStorage.removeItem('deskguard_role');
+  };
 
   // ── Fetch all desks ──
   const refreshDesks = useCallback(async () => {
@@ -182,6 +214,9 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
       desks,
       activeSession,
       currentUser,
+      userRole,
+      login,
+      logout,
       bookDesk,
       setAway,
       returnFromAway,

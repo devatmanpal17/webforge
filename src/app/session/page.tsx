@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
 
 export default function ActiveSessionPage() {
-  const { activeSession, desks, setAway, endSession } = useDeskContext();
+  const { activeSession, desks, setAway, returnFromAway, endSession } = useDeskContext();
   const router = useRouter();
   
   const [timeLeft, setTimeLeft] = useState('');
@@ -121,10 +121,7 @@ export default function ActiveSessionPage() {
           )}
           {activeSession.status === 'away' && (
             <button 
-              onClick={() => {
-                // Resume session logic would go here
-                alert('Resuming session... (Needs implementation in context)');
-              }}
+              onClick={returnFromAway}
               className="px-8 py-3 bg-desk-amber hover:bg-amber-500 text-white font-medium rounded-full shadow-sm transition-colors min-w-[140px]"
             >
               I'm Back

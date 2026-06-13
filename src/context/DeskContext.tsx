@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Desk, Session, User } from '../types';
 
 interface DeskContextType {
@@ -9,90 +9,187 @@ interface DeskContextType {
   currentUser: User;
   bookDesk: (deskId: string) => void;
   setAway: () => void;
+  returnFromAway: () => void;
   endSession: () => void;
-  releaseDesk: (deskId: string) => void; // For librarian
+  releaseDesk: (deskId: string) => void;
+  refreshDesks: () => void;
+  loading: boolean;
 }
 
-// Mock Data
-const MOCK_USER: User = {
+const CURRENT_USER: User = {
   id: 'u1',
   name: 'Sarah',
   email: 'sarah@university.edu',
   initials: 'SK',
 };
 
-// Isometric coordinates mock generator
-const generateMockDesks = (): Desk[] => {
-  const desks: Desk[] = [];
-  const floors = [1, 2, 3];
-  
-  floors.forEach(floor => {
-    for (let i = 1; i <= 20; i++) {
-      let status: Desk['status'] = 'available';
-      if (Math.random() > 0.8) status = 'occupied';
-      else if (Math.random() > 0.9) status = 'away';
-      else if (Math.random() > 0.95) status = 'flagged';
-      
-      desks.push({
-        id: `F${floor}-D${i}`,
-        zone: i <= 10 ? 'Tables' : i <= 15 ? 'Open Area' : 'Window Seat',
-        floor,
-        status,
-        x: (i % 5) * 40,
-        y: Math.floor(i / 5) * 40,
-      });
-    }
-  });
-  return desks;
-};
-
 const DeskContext = createContext<DeskContextType | undefined>(undefined);
 
 export const DeskProvider = ({ children }: { children: ReactNode }) => {
-  const [desks, setDesks] = useState<Desk[]>(generateMockDesks());
-  const [currentUser] = useState<User>(MOCK_USER);
+  const [desks, setDesks] = useState<Desk[]>([]);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
+  const [currentUser] = useState<User>(CURRENT_USER);
+  const [loading, setLoading] = useState(true);
 
-  const bookDesk = (deskId: string) => {
-    setDesks(prev => prev.map(d => d.id === deskId ? { ...d, status: 'occupied' } : d));
-    
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours
-    
-    setActiveSession({
-      id: `s_${Date.now()}`,
-      deskId,
-      studentId: currentUser.id,
-      studentName: currentUser.name,
-      studentInitials: currentUser.initials,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      status: 'active',
-    });
+  // ── Fetch all desks ──
+  const refreshDesks = useCallback(async () => {
+    try {
+      const res = await fetch('/api/desks');
+      const data = await res.json();
+      if (data.desks) {
+        setDesks(data.desks.map((d: any) => ({
+          id: d.id,
+          zone: d.zone,
+          floor: d.floor,
+          status: d.status as Desk['status'],
+          x: d.x,
+          y: d.y,
+        })));
+      }
+    } catch (err) {
+      console.error('Failed to fetch desks:', err);
+    }
+  }, []);
+
+  // ── Fetch active session for current user ──
+  const refreshSession = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/sessions?userId=${currentUser.id}`);
+      const data = await res.json();
+      if (data.session) {
+        setActiveSession({
+          id: data.session.id,
+          deskId: data.session.desk_id,
+          studentId: data.session.student_id,
+          studentName: currentUser.name,
+          studentInitials: currentUser.initials,
+          startTime: data.session.start_time,
+          endTime: data.session.end_time,
+          awayEndTime: data.session.away_end_time || undefined,
+          status: data.session.status as Session['status'],
+        });
+      } else {
+        setActiveSession(null);
+      }
+    } catch (err) {
+      console.error('Failed to fetch session:', err);
+    }
+  }, [currentUser]);
+
+  // ── Initial load ──
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([refreshDesks(), refreshSession()]);
+      setLoading(false);
+    };
+    loadData();
+  }, [refreshDesks, refreshSession]);
+
+  // ── Actions ──
+  const bookDesk = async (deskId: string) => {
+    try {
+      const res = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, deskId }),
+      });
+
+      if (res.ok) {
+        await Promise.all([refreshDesks(), refreshSession()]);
+      } else {
+        const errData = await res.json();
+        console.error('Book desk failed:', errData.error);
+      }
+    } catch (err) {
+      console.error('Failed to book desk:', err);
+    }
   };
 
-  const setAway = () => {
+  const setAway = async () => {
     if (!activeSession) return;
-    
-    setDesks(prev => prev.map(d => d.id === activeSession.deskId ? { ...d, status: 'away' } : d));
-    
-    const awayEndTime = new Date(Date.now() + 20 * 60 * 1000); // 20 mins
-    setActiveSession(prev => prev ? { ...prev, status: 'away', awayEndTime: awayEndTime.toISOString() } : null);
+    try {
+      const res = await fetch(`/api/sessions/${activeSession.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'away' }),
+      });
+
+      if (res.ok) {
+        await Promise.all([refreshDesks(), refreshSession()]);
+      }
+    } catch (err) {
+      console.error('Failed to set away:', err);
+    }
   };
 
-  const endSession = () => {
+  const returnFromAway = async () => {
     if (!activeSession) return;
-    
-    setDesks(prev => prev.map(d => d.id === activeSession.deskId ? { ...d, status: 'available' } : d));
-    setActiveSession(null);
+    try {
+      const res = await fetch(`/api/sessions/${activeSession.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'return' }),
+      });
+
+      if (res.ok) {
+        await Promise.all([refreshDesks(), refreshSession()]);
+      }
+    } catch (err) {
+      console.error('Failed to return from away:', err);
+    }
   };
 
-  const releaseDesk = (deskId: string) => {
-    setDesks(prev => prev.map(d => d.id === deskId ? { ...d, status: 'available' } : d));
+  const endSession = async () => {
+    if (!activeSession) return;
+    try {
+      const res = await fetch(`/api/sessions/${activeSession.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'end' }),
+      });
+
+      if (res.ok) {
+        await Promise.all([refreshDesks(), refreshSession()]);
+      }
+    } catch (err) {
+      console.error('Failed to end session:', err);
+    }
+  };
+
+  const releaseDesk = async (deskId: string) => {
+    // Find the session for this desk — look through the API
+    try {
+      const deskRes = await fetch(`/api/desks/${deskId}`);
+      const deskData = await deskRes.json();
+
+      if (deskData.currentSession) {
+        const res = await fetch(`/api/sessions/${deskData.currentSession.id}/release`, {
+          method: 'POST',
+        });
+
+        if (res.ok) {
+          await refreshDesks();
+        }
+      }
+    } catch (err) {
+      console.error('Failed to release desk:', err);
+    }
   };
 
   return (
-    <DeskContext.Provider value={{ desks, activeSession, currentUser, bookDesk, setAway, endSession, releaseDesk }}>
+    <DeskContext.Provider value={{
+      desks,
+      activeSession,
+      currentUser,
+      bookDesk,
+      setAway,
+      returnFromAway,
+      endSession,
+      releaseDesk,
+      refreshDesks,
+      loading,
+    }}>
       {children}
     </DeskContext.Provider>
   );

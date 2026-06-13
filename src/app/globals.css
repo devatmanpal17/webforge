@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-desk-bg: #F8F7F4;
+  --color-desk-amber: #C8861A;
+  --color-desk-charcoal: #2C2C2A;
+  --color-desk-green: #5DCAA5;
+  --color-desk-red: #E24B4A;
+  --color-desk-away: #EF9F27;
+  
+  --radius-desk: 12px;
+}
+
+:root {
+  --background: var(--color-desk-bg);
+  --foreground: var(--color-desk-charcoal);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Base styles to match the minimal aesthetic */
+*, *::before, *::after {
+  box-sizing: inherit;
+}

@@ -15,11 +15,13 @@ export default function Navigation() {
     ? [
         { href: '/librarian', label: 'Dashboard' },
         { href: '/map', label: 'Map' },
+        { href: '/librarian/account', label: 'Account' },
       ]
     : [
         { href: '/student', label: 'Dashboard' },
         { href: '/map', label: 'Map' },
         { href: '/session', label: 'Session' },
+        { href: '/student/account', label: 'Account' },
       ];
 
   return (

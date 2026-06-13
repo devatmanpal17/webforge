@@ -88,16 +88,32 @@ export default function LibrarianPage() {
   const activeDesksCount = desks.filter(d => d.status === 'occupied').length;
   const awayDesksCount = desks.filter(d => d.status === 'away').length;
   
-  const [flaggedDesks, setFlaggedDesks] = useState([
-    { id: 'd42', name: 'Desk 42', zone: 'Quiet Zone', initials: 'JD', fullName: 'John Doe', time: 'Started break at 10:15 AM', overdue: '24m' },
-    { id: 'd108', name: 'Desk 108', zone: 'Window Seat', initials: 'SW', fullName: 'Sarah Williams', time: 'Started break at 10:21 AM', overdue: '18m' },
-    { id: 'd12', name: 'Desk 12', zone: 'Standard Desk', initials: 'MC', fullName: 'Michael Chen', time: 'Started break at 10:27 AM', overdue: '12m' },
-  ]);
+  const [liveSessions, setLiveSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleRelease = (id: string) => {
-    releaseDesk(id);
-    setFlaggedDesks(prev => prev.filter(d => d.id !== id));
+  const fetchSessions = async () => {
+    try {
+      // In a real implementation this would verify a token, we just hit the new endpoint
+      const res = await fetch('/api/admin/sessions');
+      const data = await res.json();
+      setLiveSessions(data.sessions || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  const handleRelease = async (deskId: string) => {
+    await releaseDesk(deskId);
+    fetchSessions(); // Refresh after release
+  };
+
+  const flaggedDesks = liveSessions.filter(s => s.status === 'flagged');
 
   return (
     <div className="min-h-screen bg-[#F9F8F6] text-[#2B2D2F] font-sans pb-20 overflow-x-hidden">
@@ -129,42 +145,61 @@ export default function LibrarianPage() {
         </div>
 
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-serif text-2xl font-semibold text-[#1C2D42]">Flagged Seats</h2>
+          <h2 className="font-serif text-2xl font-semibold text-[#1C2D42]">Live Seat Activity</h2>
           <div className="flex items-center gap-2 text-sm text-[#8FA396]">
-            <span className="material-symbols-outlined text-lg">filter_list</span>
-            <span>Sort by: Longest Overdue</span>
+            <span className="material-symbols-outlined text-lg">sync</span>
+            <button onClick={fetchSessions} className="hover:text-[#1C2D42] transition-colors">Refresh</button>
           </div>
         </div>
 
-        {/* Masonry Grid for Flagged Seats */}
-        {flaggedDesks.length > 0 ? (
+        {/* Masonry Grid for Live Seats */}
+        {loading ? (
+          <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-[#D69F4C]/30 border-t-[#D69F4C] rounded-full animate-spin" /></div>
+        ) : liveSessions.length > 0 ? (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-            {flaggedDesks.map(desk => (
-              <div key={desk.id} className="break-inside-avoid bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent relative overflow-hidden transition-all duration-300">
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#D69F4C]"></div>
-                <div className="p-6 pl-8">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D69F4C] bg-[#D69F4C]/10 px-2.5 py-1 rounded-full mb-3">
-                        <span className="material-symbols-outlined text-[14px]">timer</span>
-                        Overdue by {desk.overdue}
-                      </span>
-                      <h3 className="font-serif text-xl text-[#1C2D42] font-semibold">{desk.name}</h3>
-                      <p className="text-sm text-[#8FA396]">{desk.zone}</p>
+            {liveSessions.map(session => {
+              const isFlagged = session.status === 'flagged';
+              const isAway = session.status === 'away';
+              
+              const accentColor = isFlagged ? '#D69F4C' : isAway ? '#D69F4C' : '#6B8E7B';
+              const badgeBg = isFlagged ? 'bg-[#D69F4C]/10' : isAway ? 'bg-[#D69F4C]/10' : 'bg-[#6B8E7B]/10';
+              const badgeText = isFlagged ? 'text-[#D69F4C]' : isAway ? 'text-[#D69F4C]' : 'text-[#6B8E7B]';
+              const icon = isFlagged ? 'warning' : isAway ? 'timer' : 'check_circle';
+              const statusText = isFlagged ? 'Flagged' : isAway ? 'Away' : 'Active';
+
+              // Format time simply
+              const startDate = new Date(session.start_time);
+              const timeString = startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+              return (
+                <div key={session.id} className="break-inside-avoid bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent relative overflow-hidden transition-all duration-300">
+                  <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: accentColor }}></div>
+                  <div className="p-6 pl-8">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full mb-3 ${badgeBg} ${badgeText}`}>
+                          <span className="material-symbols-outlined text-[14px]">{icon}</span>
+                          {statusText}
+                        </span>
+                        <h3 className="font-serif text-xl text-[#1C2D42] font-semibold">
+                          Desk {session.desk_id.replace('f1-','').replace('f2-','').replace('f3-','')}
+                        </h3>
+                        <p className="text-sm text-[#8FA396]">{session.desk_zone}</p>
+                      </div>
+                      <div className="h-10 w-10 rounded-full bg-[#F9F8F6] flex items-center justify-center text-[#1C2D42] font-bold shadow-sm border border-black/5">
+                        {session.user_initials}
+                      </div>
                     </div>
-                    <div className="h-10 w-10 rounded-full bg-[#F9F8F6] flex items-center justify-center text-[#1C2D42] font-bold shadow-sm border border-black/5">
-                      {desk.initials}
+                    <div className="mb-6 border-t border-black/5 pt-4">
+                      <p className="text-sm text-[#2B2D2F] font-medium">{session.user_name}</p>
+                      <p className="text-xs text-[#8FA396]">Started at {timeString}</p>
                     </div>
+                    
+                    <SliderToConfirm onConfirm={() => handleRelease(session.desk_id)} />
                   </div>
-                  <div className="mb-6 border-t border-black/5 pt-4">
-                    <p className="text-sm text-[#2B2D2F] font-medium">{desk.fullName}</p>
-                    <p className="text-xs text-[#8FA396]">{desk.time}</p>
-                  </div>
-                  
-                  <SliderToConfirm onConfirm={() => handleRelease(desk.id)} />
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500">

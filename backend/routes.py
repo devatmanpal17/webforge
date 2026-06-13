@@ -78,6 +78,12 @@ def release_session(id: str, user: dict = Depends(verify_token)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/admin/sessions")
+def get_all_active_sessions(user: dict = Depends(verify_token)):
+    # In a real app we'd verify the user is a librarian here
+    sessions = database.get_all_active_sessions()
+    return {"sessions": sessions}
+
 @router.get("/students")
 def get_students(user: dict = Depends(verify_token)):
     # In a real app we'd verify the user is a librarian here

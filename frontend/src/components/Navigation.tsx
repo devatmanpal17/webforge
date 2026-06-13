@@ -18,7 +18,7 @@ export default function Navigation() {
     ? [
         { href: '/librarian', label: 'Dashboard' },
         { href: '/map', label: 'Map' },
-        { href: '/librarian/students', label: 'Students' },
+        { href: '/librarian/students', label: 'Student Records' },
         { href: '/librarian/account', label: 'Account' },
       ]
     : [

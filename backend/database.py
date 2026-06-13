@@ -3,8 +3,8 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 
-# Adjust path to match where Next.js stores it
-DB_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+# Adjust path to match where the local db is stored
+DB_DIR = os.path.join(os.path.dirname(__file__), 'data')
 DB_PATH = os.path.join(DB_DIR, 'deskguard.db')
 
 def get_db():
@@ -282,10 +282,41 @@ def create_or_update_user(user_id: str, email: str, name: str, role: str) -> Dic
 def get_all_students() -> List[Dict[str, Any]]:
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM users WHERE role = ?', ('student',))
+    cursor.execute('''
+        SELECT 
+            u.*,
+            s.desk_id as active_desk_id,
+            s.status as session_status
+        FROM users u
+        LEFT JOIN (
+            SELECT student_id, desk_id, status
+            FROM sessions
+            WHERE status != 'ended'
+            GROUP BY student_id
+        ) s ON u.id = s.student_id
+        WHERE u.role = 'student'
+    ''')
     students = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return students
+
+def get_all_active_sessions() -> List[Dict[str, Any]]:
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT 
+            s.id, s.student_id as user_id, s.desk_id, s.status, s.start_time, s.away_end_time,
+            u.name as user_name, u.initials as user_initials, u.email as user_email,
+            d.zone as desk_zone
+        FROM sessions s
+        JOIN users u ON s.student_id = u.id
+        JOIN desks d ON s.desk_id = d.id
+        WHERE s.status != 'ended'
+        ORDER BY s.start_time DESC
+    ''')
+    sessions = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return sessions
 
 # Initialize DB on import
 init_db()

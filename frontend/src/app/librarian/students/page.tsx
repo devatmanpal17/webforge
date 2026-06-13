@@ -12,6 +12,8 @@ interface Student {
   email: string;
   initials: string;
   role: string;
+  active_desk_id?: string;
+  session_status?: string;
 }
 
 export default function StudentsPage() {
@@ -139,6 +141,7 @@ export default function StudentsPage() {
                     <span className="flex items-center gap-1"><Tag className="h-3 w-3" /> ID</span>
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-[#8FA396] uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[#8FA396] uppercase tracking-wider">Current Seat</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-50">
@@ -165,6 +168,18 @@ export default function StudentsPage() {
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#6B8E7B]/10 text-[#6B8E7B]">
                         {student.role}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {student.active_desk_id ? (
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${student.session_status === 'flagged' ? 'bg-[#D69F4C]' : 'bg-[#6B8E7B]'}`}></div>
+                          <span className="text-sm font-semibold text-[#1C2D42]">
+                            Desk {student.active_desk_id.replace('f1-','').replace('f2-','').replace('f3-','')}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-[#8FA396] italic">None</span>
+                      )}
                     </td>
                   </tr>
                 ))}

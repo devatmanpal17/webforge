@@ -1,6 +1,7 @@
 "use client";
 
 import { User, Mail, ShieldCheck, Bell, Clock, Settings, LogOut, Sliders } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LibrarianAccount() {
   return (
@@ -11,8 +12,8 @@ export default function LibrarianAccount() {
         {/* Profile Card */}
         <div className="md:col-span-1 space-y-6">
           <div className="bg-white rounded-[12px] border border-gray-200 p-6 shadow-sm text-center">
-            <div className="h-24 w-24 rounded-full bg-desk-amber/15 text-desk-amber flex items-center justify-center mx-auto mb-4">
-              <ShieldCheck className="h-10 w-10" />
+            <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-white shadow-md mx-auto mb-4 bg-desk-amber/10 flex items-center justify-center">
+              <Image src="/librarian_avatar.png" alt="Librarian Profile" width={96} height={96} className="object-cover" />
             </div>
             <h2 className="text-xl font-bold text-desk-charcoal">Admin</h2>
             <p className="text-sm text-gray-500 mb-6">Library Staff</p>

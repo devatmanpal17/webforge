@@ -11,6 +11,8 @@ export default function Navigation() {
 
   const isLibrarian = pathname.startsWith('/librarian');
 
+  if (pathname === '/') return null;
+
   const links = isLibrarian
     ? [
         { href: '/librarian', label: 'Dashboard' },

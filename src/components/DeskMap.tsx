@@ -88,8 +88,14 @@ export default function DeskMap({ desks, floor, onDeskClick, selectedDeskId, fil
         </text>
 
         {/* ── Isometric group — CENTERED ── */}
+        {/*
+          translate(400, 325) moves origin to center of SVG viewport.
+          scale(scale) applies the zoom level.
+          rotate(45) scale(1, 0.5) applies the isometric projection.
+          translate(-112, -101) centers the wall bounding box (which goes from x:-18 to 242, y:-18 to 220, so cx:112, cy:101)
+        */}
         <g
-          transform={`translate(400, 340) scale(${scale}) rotate(45) scale(1, 0.5)`}
+          transform={`translate(400, 325) scale(${scale}) rotate(45) scale(1, 0.5) translate(-112, -101)`}
           style={{
             opacity: visible ? 1 : 0,
             transition: 'opacity 0.2s ease-in-out',
@@ -127,18 +133,18 @@ export default function DeskMap({ desks, floor, onDeskClick, selectedDeskId, fil
                   rx="4"
                   className="transition-all duration-300"
                 />
-                {/* Zone label — counter-rotated so readable on isometric canvas */}
+                {/* Zone label — counter-rotated using inverse matrix so it stands up straight */}
                 <text
-                  x={bounds.x + bounds.w / 2}
-                  y={bounds.y + 10}
+                  x="0"
+                  y="0"
                   textAnchor="middle"
-                  fontSize="7"
+                  fontSize="10"
                   fontWeight="600"
-                  fill="#B0ADA8"
+                  fill="#A3A09A"
                   letterSpacing="0.12em"
                   fontFamily="system-ui, sans-serif"
-                  transform={`rotate(-45, ${bounds.x + bounds.w / 2}, ${bounds.y + 10}) scale(1, 2)`}
-                  style={{ transformOrigin: `${bounds.x + bounds.w / 2}px ${bounds.y + 10}px` }}
+                  transform={`translate(${bounds.x + bounds.w / 2}, ${bounds.y + 12}) rotate(-45) scale(1, 2)`}
+                  style={{ pointerEvents: 'none' }}
                 >
                   {zone.toUpperCase()}
                 </text>
@@ -150,15 +156,15 @@ export default function DeskMap({ desks, floor, onDeskClick, selectedDeskId, fil
           <g>
             <line x1="-18" y1="195" x2="-18" y2="220" stroke="#C8861A" strokeWidth="2.5" strokeLinecap="round" />
             <text
-              x="-10"
-              y="212"
+              x="0"
+              y="0"
               fontSize="6.5"
               fontWeight="700"
               fill="#C8861A"
               letterSpacing="0.06em"
               fontFamily="system-ui, sans-serif"
-              transform="rotate(-45, -10, 212) scale(1, 2)"
-              style={{ transformOrigin: '-10px 212px' }}
+              transform="translate(-10, 212) rotate(-45) scale(1, 2)"
+              style={{ pointerEvents: 'none' }}
             >
               ENTRY
             </text>
@@ -198,21 +204,21 @@ export default function DeskMap({ desks, floor, onDeskClick, selectedDeskId, fil
                   height="32"
                   fill={color}
                   stroke={isSelected ? '#2C2C2A' : isSearchMatch ? '#C8861A' : 'rgba(255,255,255,0.5)'}
-                  strokeWidth={isSelected ? '2.5' : isSearchMatch ? '2' : '0.8'}
+                  strokeWidth={isSelected ? '2.5' : isSearchMatch ? '2.5' : '0.8'}
                   rx="5"
                   className="transition-all duration-200"
                 />
                 {/* Desk number */}
                 <text
-                  x="16"
-                  y="19"
+                  x="0"
+                  y="0"
                   fontSize="9"
                   fill="rgba(255,255,255,0.9)"
                   textAnchor="middle"
                   fontWeight="700"
                   fontFamily="system-ui, sans-serif"
-                  transform="rotate(-45, 16, 19) scale(1, 2)"
-                  style={{ transformOrigin: '16px 19px', pointerEvents: 'none' }}
+                  transform="translate(16, 19) rotate(-45) scale(1, 2)"
+                  style={{ pointerEvents: 'none' }}
                 >
                   {desk.id.split('-')[1]}
                 </text>
@@ -222,7 +228,7 @@ export default function DeskMap({ desks, floor, onDeskClick, selectedDeskId, fil
         </g>
 
         {/* ── Compass (bottom-right, outside isometric transform) ── */}
-        <g transform="translate(760, 610)">
+        <g transform="translate(750, 600)">
           <circle cx="0" cy="0" r="16" fill="white" stroke="#E0E0E0" strokeWidth="0.8" />
           <text x="0" y="1" textAnchor="middle" dominantBaseline="middle" fontSize="10" fontWeight="700" fill="#2C2C2A" fontFamily="system-ui, sans-serif">N</text>
           <polygon points="0,-12 -2.5,-7 2.5,-7" fill="#C8861A" />
@@ -230,20 +236,20 @@ export default function DeskMap({ desks, floor, onDeskClick, selectedDeskId, fil
       </svg>
 
       {/* ── Zoom controls ── */}
-      <div className="absolute bottom-4 left-4 flex flex-col gap-1">
+      <div className="absolute bottom-6 left-6 flex flex-col gap-2 z-10">
         <button
-          onClick={() => setZoom(z => Math.min(z + 0.15, 1.8))}
-          className="h-8 w-8 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-gray-500 hover:text-desk-charcoal hover:border-gray-300 transition-colors shadow-sm"
+          onClick={() => setZoom(z => Math.min(z + 0.15, 2.5))}
+          className="h-10 w-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-desk-charcoal hover:border-gray-300 transition-colors shadow-sm"
           aria-label="Zoom in"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-5 h-5" />
         </button>
         <button
-          onClick={() => setZoom(z => Math.max(z - 0.15, 0.6))}
-          className="h-8 w-8 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-gray-500 hover:text-desk-charcoal hover:border-gray-300 transition-colors shadow-sm"
+          onClick={() => setZoom(z => Math.max(z - 0.15, 0.5))}
+          className="h-10 w-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-desk-charcoal hover:border-gray-300 transition-colors shadow-sm"
           aria-label="Zoom out"
         >
-          <Minus className="w-4 h-4" />
+          <Minus className="w-5 h-5" />
         </button>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useDeskContext } from '@/context/DeskContext';
 import { User, Mail, ShieldCheck, Bell, Clock, Settings, LogOut } from 'lucide-react';
+import Image from 'next/image';
 
 export default function StudentAccount() {
   const { currentUser } = useDeskContext();
@@ -14,8 +15,8 @@ export default function StudentAccount() {
         {/* Profile Card */}
         <div className="md:col-span-1 space-y-6">
           <div className="bg-white rounded-[12px] border border-gray-200 p-6 shadow-sm text-center">
-            <div className="h-24 w-24 rounded-full bg-desk-amber/15 text-desk-amber flex items-center justify-center text-3xl font-bold mx-auto mb-4">
-              {currentUser.initials}
+            <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-white shadow-md mx-auto mb-4 bg-gray-100 flex items-center justify-center">
+              <Image src="/student_avatar.png" alt="Student Profile" width={96} height={96} className="object-cover" />
             </div>
             <h2 className="text-xl font-bold text-desk-charcoal">{currentUser.name}</h2>
             <p className="text-sm text-gray-500 mb-6">Student</p>

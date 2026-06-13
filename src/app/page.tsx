@@ -36,7 +36,7 @@ export default function LoginPage() {
           </div>
 
           {/* Student Login Card */}
-          <Link href="/student" className="block group">
+          <Link href="/student/login" className="block group">
             <div className="bg-white rounded-[20px] border border-gray-200 p-6 shadow-sm hover:shadow-lg hover:border-desk-amber/30 transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -56,7 +56,7 @@ export default function LoginPage() {
           </Link>
 
           {/* Librarian Login Card */}
-          <Link href="/librarian" className="block group">
+          <Link href="/librarian/login" className="block group">
             <div className="bg-white rounded-[20px] border border-gray-200 p-6 shadow-sm hover:shadow-lg hover:border-desk-amber/30 transition-all duration-300 relative overflow-hidden">
               {/* Subtle accent border for staff */}
               <div className="absolute top-0 left-0 w-1.5 h-full bg-desk-amber/80" />

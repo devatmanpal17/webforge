@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useDeskContext } from '@/context/DeskContext';
 
 interface RoleGuardProps {
@@ -12,8 +12,10 @@ interface RoleGuardProps {
 export function RoleGuard({ children, allowedRole }: RoleGuardProps) {
   const { userRole, loading } = useDeskContext();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname.endsWith('/login')) return; // Allow access to login pages
     // Only run the check if we have a resolved role or if we know they aren't logged in
     const checkRole = () => {
       // Small delay to allow localStorage to load in context
@@ -25,7 +27,11 @@ export function RoleGuard({ children, allowedRole }: RoleGuardProps) {
       }, 50);
     };
     checkRole();
-  }, [allowedRole, router]);
+  }, [allowedRole, router, pathname]);
+
+  if (pathname.endsWith('/login')) {
+    return <>{children}</>;
+  }
 
   // Don't render until we are sure
   if (userRole !== allowedRole) {

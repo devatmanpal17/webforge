@@ -13,12 +13,6 @@ export default function ActiveSessionPage() {
   const [progress, setProgress] = useState(100);
   const [showPrompt, setShowPrompt] = useState(false);
 
-  useEffect(() => {
-    if (!activeSession) {
-      router.push('/student');
-      return;
-    }
-
     const updateTimer = () => {
       const now = new Date().getTime();
       const end = activeSession.status === 'away' && activeSession.awayEndTime 
@@ -53,9 +47,27 @@ export default function ActiveSessionPage() {
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [activeSession, router]);
+  }, [activeSession]);
 
-  if (!activeSession) return null;
+  if (!activeSession) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-white text-center">
+        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+          <MapPin className="w-10 h-10 text-gray-300" />
+        </div>
+        <h2 className="text-2xl font-bold text-desk-charcoal mb-2">No Active Session</h2>
+        <p className="text-gray-500 max-w-md mb-8">
+          You don't currently have a desk booked. Browse the floor map to find an available seat and start a new study session.
+        </p>
+        <button 
+          onClick={() => router.push('/map')}
+          className="px-8 py-3 bg-desk-amber hover:bg-amber-500 text-white font-medium rounded-full shadow-sm transition-colors min-w-[140px]"
+        >
+          Book a Desk
+        </button>
+      </div>
+    );
+  }
 
   const activeDesk = desks.find(d => d.id === activeSession.deskId);
   const circleCircumference = 2 * Math.PI * 120; // r=120

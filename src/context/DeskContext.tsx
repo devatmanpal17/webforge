@@ -85,6 +85,8 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
 
   // ── Fetch active session for current user ──
   const refreshSession = useCallback(async () => {
+    if (!currentUser) return;
+    
     try {
       const res = await fetch(`/api/sessions?userId=${currentUser.id}`);
       const data = await res.json();

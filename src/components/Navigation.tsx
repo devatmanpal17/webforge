@@ -7,11 +7,12 @@ import { User, ShieldCheck } from 'lucide-react';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { currentUser } = useDeskContext();
+  const { currentUser, userRole } = useDeskContext();
 
-  const isLibrarian = pathname.startsWith('/librarian');
+  // If we are at the root or a login page, hide navigation entirely
+  if (pathname === '/' || pathname.endsWith('/login')) return null;
 
-  if (pathname === '/') return null;
+  const isLibrarian = userRole === 'librarian' || pathname.startsWith('/librarian');
 
   const links = isLibrarian
     ? [
@@ -71,42 +72,39 @@ export default function Navigation() {
           </div>
 
           {/* User Profile / Mode Switcher */}
-          <div className="flex items-center gap-3">
-            {/* Role Switcher */}
-            <Link
-              href={isLibrarian ? '/student' : '/librarian'}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
-            >
-              {isLibrarian ? (
-                <>
-                  <User className="h-3 w-3" />
-                  Student view
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="h-3 w-3" />
-                  Staff view
-                </>
-              )}
-            </Link>
-
-            <div className="h-4 w-px bg-gray-200" />
-
+          <div className="flex items-center gap-4">
             {isLibrarian ? (
               <div className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-full bg-desk-amber/15 flex items-center justify-center">
                   <ShieldCheck className="h-3.5 w-3.5 text-desk-amber" />
                 </div>
-                <span className="text-sm font-medium text-desk-charcoal hidden sm:block">Admin</span>
+                <span className="text-sm font-medium text-desk-charcoal hidden sm:block">
+                  {currentUser?.name || 'Admin'}
+                </span>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-desk-charcoal">
-                  {currentUser.initials}
+                  {currentUser?.initials || 'S'}
                 </div>
-                <span className="text-sm font-medium text-desk-charcoal hidden sm:block">{currentUser.name}</span>
+                <span className="text-sm font-medium text-desk-charcoal hidden sm:block">
+                  {currentUser?.name || 'Student'}
+                </span>
               </div>
             )}
+            
+            <button 
+              onClick={() => {
+                // Actually need to get logout from context, but since this is a UI component, 
+                // we'll just redirect to root which will clear or we can just call logout.
+                // It's safer to just do a window.location so it does a hard reload back to login page
+                localStorage.removeItem('deskguard_role');
+                window.location.href = '/';
+              }}
+              className="text-xs text-red-500 hover:text-red-700 transition-colors"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </div>

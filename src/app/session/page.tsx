@@ -13,6 +13,9 @@ export default function ActiveSessionPage() {
   const [progress, setProgress] = useState(100);
   const [showPrompt, setShowPrompt] = useState(false);
 
+  useEffect(() => {
+    if (!activeSession) return;
+
     const updateTimer = () => {
       const now = new Date().getTime();
       const end = activeSession.status === 'away' && activeSession.awayEndTime 

@@ -279,5 +279,13 @@ def create_or_update_user(user_id: str, email: str, name: str, role: str) -> Dic
     conn.close()
     return user
 
+def get_all_students() -> List[Dict[str, Any]]:
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE role = ?', ('student',))
+    students = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return students
+
 # Initialize DB on import
 init_db()

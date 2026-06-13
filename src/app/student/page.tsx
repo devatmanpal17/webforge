@@ -33,7 +33,7 @@ function SessionTimerDisplay({ endTime }: { endTime: string }) {
     return () => clearInterval(interval);
   }, [endTime]);
 
-  return <div className="text-3xl font-mono font-bold tracking-tight text-desk-charcoal">{timeLeft}</div>;
+  return <div className="text-3xl font-serif font-semibold tracking-tight text-[#1C2D42]">{timeLeft}</div>;
 }
 
 export default function StudentDashboard() {
@@ -66,106 +66,86 @@ export default function StudentDashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <div className="animate-pulse space-y-6">
-          <div className="h-10 bg-gray-200 rounded w-72" />
-          <div className="h-24 bg-gray-200 rounded-[12px]" />
-          <div className="h-48 bg-gray-200 rounded-[12px]" />
-        </div>
+      <div className="min-h-screen bg-[#F9F8F6] text-[#2B2D2F] font-sans pb-20">
+        <main className="max-w-[1200px] mx-auto px-8 md:px-20 lg:px-40 pt-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-10 bg-white rounded w-72 shadow-sm" />
+            <div className="h-24 bg-white rounded-[24px] shadow-sm" />
+            <div className="h-48 bg-white rounded-[24px] shadow-sm" />
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-      <h1 className="text-3xl font-bold text-desk-charcoal mb-4">
-        {greeting}, {currentUser.name}.
-      </h1>
+    <div className="min-h-screen bg-[#F9F8F6] text-[#2B2D2F] font-sans pb-20 overflow-x-hidden">
+      <main className="max-w-[1200px] mx-auto px-8 md:px-20 lg:px-40 pt-8">
 
-      {/* ── Live Availability Banner ── */}
-      <Link
-        href={`/map?floor=${quietestFloor.floor}`}
-        className="block mb-8 bg-white rounded-[12px] border border-gray-200 p-4 hover:border-desk-amber/40 transition-all duration-200 group"
-      >
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-2 w-2 rounded-full bg-desk-green animate-pulse flex-shrink-0" />
-              <span className="text-sm font-medium text-desk-charcoal">
-                {totalAvailable} of {totalDesks} seats available right now
-              </span>
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="font-serif text-4xl font-semibold text-[#1C2D42] mb-2">
+            {greeting}, {currentUser?.name || 'Student'}.
+          </h1>
+          <p className="text-[#8FA396] text-sm font-medium">
+            {totalAvailable} of {totalDesks} seats available right now
+          </p>
+        </div>
+
+        {/* Metrics Cards — matches staff dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          {floorStats.map(fs => (
+            <div key={fs.floor} className="flex flex-col gap-2 rounded-[24px] p-6 bg-white shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent hover:border-[#6B8E7B]/20 transition-colors">
+              <p className="text-[#8FA396] text-sm font-medium leading-normal">Floor {fs.floor}</p>
+              <p className="text-[#6B8E7B] font-serif text-3xl font-semibold">{fs.available}</p>
+              <p className="text-[#8FA396] text-xs">{fs.total} total seats</p>
             </div>
-
-            {/* Floor bars — proportional fills */}
-            <div className="flex items-end gap-3">
-              {floorStats.map(fs => {
-                const isQuietest = fs.floor === quietestFloor.floor;
-                return (
-                  <div key={fs.floor} className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline mb-1">
-                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">F{fs.floor}</span>
-                      <span className="text-[10px] text-gray-400">{fs.available} free</span>
-                    </div>
-                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700 ease-out"
-                        style={{
-                          width: `${fs.pctFree}%`,
-                          backgroundColor: isQuietest ? '#5DCAA5' : '#5DCAA5',
-                          opacity: isQuietest ? 1 : 0.35,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-desk-amber group-hover:gap-3 transition-all duration-200 flex-shrink-0">
-            <span className="text-sm font-medium hidden sm:block whitespace-nowrap">
-              Floor {quietestFloor.floor} is quietest
-            </span>
-            <ArrowRight className="h-4 w-4 flex-shrink-0" />
+          ))}
+          <div className="flex flex-col gap-2 rounded-[24px] p-6 bg-white shadow-[0_12px_24px_rgba(28,45,66,0.08)] border-2 border-[#D69F4C]/30 bg-[#D69F4C]/5">
+            <p className="text-[#2B2D2F] text-sm font-medium leading-normal flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#D69F4C] text-sm">emoji_objects</span>
+              Best Floor
+            </p>
+            <p className="text-[#D69F4C] font-serif text-3xl font-semibold">F{quietestFloor.floor}</p>
+            <p className="text-[#8FA396] text-xs">{quietestFloor.available} available</p>
           </div>
         </div>
-      </Link>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Current Session Card — or empty CTA */}
-          {activeSession && activeDesk ? (
-            <div className="bg-white rounded-[12px] border border-gray-200 p-6 shadow-sm">
+        {/* Current Session or Book CTA */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-serif text-2xl font-semibold text-[#1C2D42]">
+            {activeSession ? 'Your Active Session' : 'Book a Seat'}
+          </h2>
+        </div>
+
+        {activeSession && activeDesk ? (
+          <div className="bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent relative overflow-hidden mb-10">
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#6B8E7B]"></div>
+            <div className="p-6 pl-8">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div className="space-y-4">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Your Current Session</h2>
-                    <div className="mt-2 flex items-center gap-3">
-                      <MapPin className="h-5 w-5 text-desk-amber flex-shrink-0" />
-                      <div>
-                        <span className="text-xl font-bold text-desk-charcoal">Desk {activeSession.deskId.split('-')[1]}</span>
-                        <span className="text-gray-400 mx-2">·</span>
-                        <span className="text-gray-500">Floor {activeDesk.floor}</span>
-                        <span className="text-gray-400 mx-2">·</span>
-                        <span className="text-gray-500">{activeDesk.zone}</span>
-                      </div>
-                    </div>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6B8E7B] bg-[#6B8E7B]/10 px-2.5 py-1 rounded-full mb-3">
+                      <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                      {activeSession.status === 'away' ? 'Away' : 'Active'}
+                    </span>
+                    <h3 className="font-serif text-xl text-[#1C2D42] font-semibold">Desk {activeSession.deskId.split('-')[1]}</h3>
+                    <p className="text-sm text-[#8FA396]">Floor {activeDesk.floor} · {activeDesk.zone}</p>
                   </div>
 
-                  <div className="bg-desk-bg rounded-lg px-5 py-3 inline-block">
+                  <div className="bg-[#F9F8F6] rounded-lg px-5 py-3 inline-block">
                     <SessionTimerDisplay
                       endTime={activeSession.status === 'away' && activeSession.awayEndTime ? activeSession.awayEndTime : activeSession.endTime}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-[#8FA396] mt-1">
                       {activeSession.status === 'away' ? 'Return time remaining' : 'Session time remaining'}
                     </p>
                   </div>
 
                   {activeSession.status === 'away' && (
-                    <div className="flex items-center gap-2 text-desk-away text-sm font-medium">
-                      <div className="h-2 w-2 rounded-full bg-desk-away animate-pulse" />
-                      You're marked as away
+                    <div className="flex items-center gap-2 text-[#D69F4C] text-sm font-medium">
+                      <div className="h-2 w-2 rounded-full bg-[#D69F4C] animate-pulse" />
+                      You&apos;re marked as away
                     </div>
                   )}
                 </div>
@@ -174,20 +154,20 @@ export default function StudentDashboard() {
                   {activeSession.status === 'active' && (
                     <button
                       onClick={setAway}
-                      className="w-full py-2.5 bg-desk-amber hover:bg-amber-500 text-white font-medium rounded-lg transition-colors shadow-sm"
+                      className="w-full py-2.5 bg-[#D69F4C] hover:bg-[#c4902e] text-white font-bold rounded-full transition-colors shadow-sm"
                     >
                       Step Away (20m)
                     </button>
                   )}
                   <button
                     onClick={endSession}
-                    className="w-full py-2.5 bg-white border-2 border-gray-200 hover:border-gray-300 text-desk-charcoal font-medium rounded-lg transition-colors"
+                    className="w-full py-2.5 bg-transparent border-2 border-[#1C2D42] text-[#1C2D42] font-bold rounded-full hover:bg-[#1C2D42]/5 transition-colors"
                   >
                     End Session
                   </button>
                   <Link
                     href="/session"
-                    className="w-full py-2 text-center text-sm text-desk-amber font-medium hover:underline flex items-center justify-center gap-1"
+                    className="w-full py-2 text-center text-sm text-[#D69F4C] font-medium hover:underline flex items-center justify-center gap-1"
                   >
                     View full screen
                     <ArrowRight className="h-3 w-3" />
@@ -195,59 +175,96 @@ export default function StudentDashboard() {
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="bg-white rounded-[12px] border border-gray-200 p-8 flex flex-col items-center justify-center text-center shadow-sm">
-              <div className="h-16 w-16 bg-desk-bg rounded-full flex items-center justify-center mb-4">
-                <Search className="h-8 w-8 text-desk-amber" />
+          </div>
+        ) : (
+          <div className="columns-1 md:columns-2 gap-6 space-y-6 mb-10">
+            {/* Book a seat CTA card */}
+            <div className="break-inside-avoid bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#D69F4C]"></div>
+              <div className="p-8 pl-10 flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-[#F9F8F6] flex items-center justify-center mb-6">
+                  <Search className="h-8 w-8 text-[#D69F4C]" />
+                </div>
+                <h3 className="font-serif text-xl text-[#1C2D42] font-semibold mb-2">Ready to study?</h3>
+                <p className="text-[#8FA396] mb-6 text-sm max-w-md">
+                  Browse the library floor map, pick an available desk, and start your session.
+                </p>
+                <Link
+                  href="/map"
+                  className="px-8 py-3 bg-[#1C2D42] hover:bg-[#1C2D42]/90 text-white font-bold rounded-full shadow-sm transition-colors flex items-center gap-2"
+                >
+                  <MapPin className="h-5 w-5" />
+                  Find a Seat
+                </Link>
               </div>
-              <h2 className="text-xl font-bold text-desk-charcoal mb-2">Ready to study?</h2>
-              <p className="text-gray-500 mb-6 max-w-md">
-                The library is currently showing plenty of available seats. Find your focus space for the day.
-              </p>
-              <Link
-                href="/map"
-                className="px-6 py-3 bg-desk-amber hover:bg-amber-500 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2"
-              >
-                <MapPin className="h-5 w-5" />
-                Book a Seat
-              </Link>
             </div>
-          )}
 
-          {/* Upcoming Reservations */}
-          <div>
-            <h3 className="text-lg font-bold text-desk-charcoal mb-4">Upcoming Reservations</h3>
-            <div className="bg-white rounded-[12px] border border-gray-200 p-8 flex flex-col items-center justify-center text-center">
-              <Clock className="h-8 w-8 text-gray-300 mb-3" />
-              <p className="text-gray-500">No upcoming reservations.</p>
-              <Link href="/map" className="text-desk-amber font-medium mt-1 hover:underline">
-                Browse the map to schedule one.
-              </Link>
+            {/* Quick floor pick card */}
+            <div className="break-inside-avoid bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent relative overflow-hidden">
+              <div className="p-6">
+                <h3 className="font-serif text-lg text-[#1C2D42] font-semibold mb-4">Quick Floor Pick</h3>
+                <div className="space-y-3">
+                  {floorStats.map(fs => (
+                    <Link
+                      key={fs.floor}
+                      href={`/map?floor=${fs.floor}`}
+                      className="flex items-center justify-between p-3 rounded-xl hover:bg-[#F9F8F6] transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#F9F8F6] flex items-center justify-center font-serif font-bold text-[#1C2D42]">
+                          {fs.floor}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-[#1C2D42]">Floor {fs.floor}</p>
+                          <p className="text-xs text-[#8FA396]">{fs.available} of {fs.total} available</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-16 bg-[#F0F2F4] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#6B8E7B] rounded-full transition-all duration-500"
+                            style={{ width: `${fs.pctFree}%` }}
+                          />
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-[#8FA396] group-hover:text-[#1C2D42] transition-colors" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* Library Guidelines */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-serif text-2xl font-semibold text-[#1C2D42]">Library Guidelines</h2>
+        </div>
+        <div className="columns-1 md:columns-3 gap-6 space-y-6">
+          <div className="break-inside-avoid bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent p-6">
+            <div className="h-10 w-10 rounded-full bg-[#D69F4C]/10 flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-[#D69F4C]">timer</span>
+            </div>
+            <h4 className="font-serif text-lg font-semibold text-[#1C2D42] mb-2">2-Hour Sessions</h4>
+            <p className="text-sm text-[#8FA396]">Each study session lasts for a maximum of 2 hours. You&apos;ll be prompted to confirm your presence before it expires.</p>
+          </div>
+          <div className="break-inside-avoid bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent p-6">
+            <div className="h-10 w-10 rounded-full bg-[#6B8E7B]/10 flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-[#6B8E7B]">coffee</span>
+            </div>
+            <h4 className="font-serif text-lg font-semibold text-[#1C2D42] mb-2">20-Min Breaks</h4>
+            <p className="text-sm text-[#8FA396]">Step away for up to 20 minutes without losing your seat. Exceeding this time may result in your seat being released.</p>
+          </div>
+          <div className="break-inside-avoid bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent p-6">
+            <div className="h-10 w-10 rounded-full bg-[#1C2D42]/10 flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-[#1C2D42]">verified</span>
+            </div>
+            <h4 className="font-serif text-lg font-semibold text-[#1C2D42] mb-2">Confirm Presence</h4>
+            <p className="text-sm text-[#8FA396]">When prompted, confirm you&apos;re still at your desk. Unconfirmed sessions are automatically released.</p>
           </div>
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
-          <div className="bg-desk-charcoal text-white rounded-[12px] p-6 shadow-sm">
-            <h3 className="font-bold mb-3">Library Guidelines</h3>
-            <ul className="text-sm space-y-3 text-gray-300">
-              <li className="flex items-start gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-desk-amber mt-1.5 flex-shrink-0" />
-                <p>Sessions last for 2 hours maximum.</p>
-              </li>
-              <li className="flex items-start gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-desk-amber mt-1.5 flex-shrink-0" />
-                <p>You can step away for up to 20 minutes without losing your seat.</p>
-              </li>
-              <li className="flex items-start gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-desk-amber mt-1.5 flex-shrink-0" />
-                <p>Confirm you're still present when prompted to avoid seat release.</p>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

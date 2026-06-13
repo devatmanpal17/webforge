@@ -7,7 +7,7 @@ import { User, ShieldCheck } from 'lucide-react';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { currentUser, userRole } = useDeskContext();
+  const { currentUser, userRole, logout } = useDeskContext();
 
   // If we are at the root or a login page, hide navigation entirely
   if (pathname === '/' || pathname.endsWith('/login')) return null;
@@ -18,6 +18,7 @@ export default function Navigation() {
     ? [
         { href: '/librarian', label: 'Dashboard' },
         { href: '/map', label: 'Map' },
+        { href: '/librarian/students', label: 'Students' },
         { href: '/librarian/account', label: 'Account' },
       ]
     : [
@@ -35,11 +36,11 @@ export default function Navigation() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href={isLibrarian ? '/librarian' : '/student'} className="flex items-center gap-1.5">
-                <span className="text-lg font-bold text-desk-charcoal tracking-tight">
+                <span className="text-lg font-bold text-[#1C2D42] tracking-tight">
                   DeskGuard
                 </span>
                 {isLibrarian && (
-                  <span className="text-xs font-semibold text-desk-amber bg-desk-amber/10 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-semibold text-[#D69F4C] bg-[#D69F4C]/10 px-1.5 py-0.5 rounded">
                     Staff
                   </span>
                 )}
@@ -54,14 +55,14 @@ export default function Navigation() {
                     href={link.href}
                     className={`relative inline-flex items-center px-3 py-1 text-sm font-medium transition-colors duration-200 ${
                       isActive
-                        ? 'text-desk-charcoal'
-                        : 'text-gray-400 hover:text-gray-600'
+                        ? 'text-[#1C2D42]'
+                        : 'text-[#8FA396] hover:text-[#2B2D2F]'
                     }`}
                   >
                     {link.label}
                     {/* Animated underline */}
                     <span
-                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-desk-amber rounded-full transition-all duration-300 ease-out ${
+                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-[#D69F4C] rounded-full transition-all duration-300 ease-out ${
                         isActive ? 'w-full' : 'w-0'
                       }`}
                     />
@@ -71,37 +72,34 @@ export default function Navigation() {
             </nav>
           </div>
 
-          {/* User Profile / Mode Switcher */}
-          <div className="flex items-center gap-4">
+          {/* User Profile */}
+          <div className="flex items-center gap-3">
             {isLibrarian ? (
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-full bg-desk-amber/15 flex items-center justify-center">
-                  <ShieldCheck className="h-3.5 w-3.5 text-desk-amber" />
+                <div className="h-7 w-7 rounded-full bg-[#D69F4C]/15 flex items-center justify-center">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#D69F4C]" />
                 </div>
-                <span className="text-sm font-medium text-desk-charcoal hidden sm:block">
+                <span className="text-sm font-medium text-[#1C2D42] hidden sm:block">
                   {currentUser?.name || 'Admin'}
                 </span>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-desk-charcoal">
+                <div className="h-7 w-7 rounded-full bg-[#F0F2F4] flex items-center justify-center text-xs font-semibold text-[#1C2D42]">
                   {currentUser?.initials || 'S'}
                 </div>
-                <span className="text-sm font-medium text-desk-charcoal hidden sm:block">
+                <span className="text-sm font-medium text-[#1C2D42] hidden sm:block">
                   {currentUser?.name || 'Student'}
                 </span>
               </div>
             )}
             
             <button 
-              onClick={() => {
-                // Actually need to get logout from context, but since this is a UI component, 
-                // we'll just redirect to root which will clear or we can just call logout.
-                // It's safer to just do a window.location so it does a hard reload back to login page
-                localStorage.removeItem('deskguard_role');
+              onClick={async () => {
+                await logout();
                 window.location.href = '/';
               }}
-              className="text-xs text-red-500 hover:text-red-700 transition-colors"
+              className="text-xs text-red-500 hover:text-red-700 transition-colors font-semibold"
             >
               Sign Out
             </button>

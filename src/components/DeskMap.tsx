@@ -69,17 +69,22 @@ function Desk3D({
   );
 }
 
-export default function DeskMap({ selectedZone, onDeskSelect }: { selectedZone: string | null, onDeskSelect?: (desk: Desk) => void }) {
-  const { desks } = useDeskContext();
-  const [selectedDeskId, setSelectedDeskId] = useState<string | null>(null);
-
-  const handleDeskClick = (desk: Desk) => {
-    setSelectedDeskId(desk.id);
-    if (onDeskSelect) onDeskSelect(desk);
-  };
-
-  // Only show floor 1 for now, or all floors layered (but let's do F1)
-  const visibleDesks = desks.filter(d => d.floor === 1);
+export default function DeskMap({
+  desks,
+  floor,
+  onDeskClick,
+  selectedDeskId,
+  filterZone,
+  searchHighlight
+}: {
+  desks: Desk[],
+  floor: number,
+  onDeskClick?: (desk: Desk) => void,
+  selectedDeskId?: string,
+  filterZone?: string | null,
+  searchHighlight?: string
+}) {
+  const visibleDesks = desks.filter(d => d.floor === floor);
 
   return (
     <div className="w-full h-full min-h-[520px] bg-[#F9F8F6] relative rounded-3xl overflow-hidden shadow-inner group cursor-grab active:cursor-grabbing">
@@ -116,9 +121,9 @@ export default function DeskMap({ selectedZone, onDeskSelect }: { selectedZone: 
           <Desk3D
             key={desk.id}
             desk={desk}
-            onClick={() => handleDeskClick(desk)}
+            onClick={() => onDeskClick && onDeskClick(desk)}
             isSelected={selectedDeskId === desk.id}
-            isFaded={selectedZone !== null && desk.zone !== selectedZone}
+            isFaded={filterZone != null && desk.zone !== filterZone}
           />
         ))}
 

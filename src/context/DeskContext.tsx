@@ -142,8 +142,8 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
   }, [refreshDesks, refreshSession, firebaseToken]);
 
   // ── Actions ──
-  const bookDesk = async (deskId: string) => {
-    if (!currentUser) return;
+  const bookDesk = async (deskId: string): Promise<boolean> => {
+    if (!currentUser) return false;
     try {
       const res = await fetchWithAuth('/api/sessions', {
         method: 'POST',
@@ -153,12 +153,15 @@ export const DeskProvider = ({ children }: { children: ReactNode }) => {
 
       if (res.ok) {
         await Promise.all([refreshDesks(), refreshSession()]);
+        return true;
       } else {
         const errData = await res.json();
         console.error('Book desk failed:', errData.error || errData.detail);
+        return false;
       }
     } catch (err) {
       console.error('Failed to book desk:', err);
+      return false;
     }
   };
 

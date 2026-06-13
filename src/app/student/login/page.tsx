@@ -30,9 +30,11 @@ export default function StudentLogin() {
           },
           body: JSON.stringify({ role: 'student' })
       });
-      router.push('/student');
+      window.location.href = '/student';
     } catch (err: any) {
-      setError(err.message || 'Failed to authenticate with Google');
+      if (err.code !== 'auth/cancelled-popup-request' && err.code !== 'auth/popup-closed-by-user') {
+        setError(err.message || 'Failed to authenticate with Google');
+      }
     }
   };
 
@@ -62,23 +64,23 @@ export default function StudentLogin() {
         await signInWithEmailAndPassword(auth, email, password);
         localStorage.setItem('deskguard_role', 'student');
       }
-      router.push('/student');
+      window.location.href = '/student';
     } catch (err: any) {
       setError(err.message || 'Failed to authenticate');
     }
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center min-h-[calc(100vh-56px)] bg-desk-bg px-4">
+    <div className="flex-1 flex items-center justify-center min-h-[calc(100vh-56px)] bg-[#F9F8F6] px-4 relative">
       <div className="w-full max-w-md bg-white rounded-[20px] shadow-lg border border-gray-100 overflow-hidden">
-        <div className="bg-desk-charcoal p-8 text-center relative overflow-hidden">
-          <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-desk-amber/20 rounded-full blur-[40px]"></div>
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 text-center relative overflow-hidden border-b border-gray-100">
+          <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-[#D69F4C]/10 rounded-full blur-[40px]"></div>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-white shadow-md mb-4 bg-gray-100 flex items-center justify-center">
+            <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-white shadow-md mb-4 bg-white flex items-center justify-center">
               <Image src="/student_avatar.png" alt="Student Profile" width={80} height={80} className="object-cover" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-1">Student Portal</h2>
-            <p className="text-gray-400 text-sm">{isSignUp ? 'Create a new account' : 'Sign in to book desks'}</p>
+            <h2 className="text-2xl font-bold text-[#1C2D42] mb-1">Student Portal</h2>
+            <p className="text-[#8FA396] text-sm">{isSignUp ? 'Create a new account' : 'Sign in to book desks'}</p>
           </div>
         </div>
 

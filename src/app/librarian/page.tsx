@@ -21,7 +21,6 @@ function SliderToConfirm({ onConfirm }: { onConfirm: () => void }) {
     const maxTravel = containerRef.current.offsetWidth - thumbWidth - 8;
     const deltaX = clientX - startX.current;
     
-    // Convert to progress 0-1
     let newProgress = Math.max(0, Math.min(deltaX / maxTravel, 1));
     setProgress(newProgress);
 
@@ -89,7 +88,6 @@ export default function LibrarianPage() {
   const activeDesksCount = desks.filter(d => d.status === 'occupied').length;
   const awayDesksCount = desks.filter(d => d.status === 'away').length;
   
-  // Hardcoded flagged seats for UI demonstration
   const [flaggedDesks, setFlaggedDesks] = useState([
     { id: 'd42', name: 'Desk 42', zone: 'Quiet Zone', initials: 'JD', fullName: 'John Doe', time: 'Started break at 10:15 AM', overdue: '24m' },
     { id: 'd108', name: 'Desk 108', zone: 'Window Seat', initials: 'SW', fullName: 'Sarah Williams', time: 'Started break at 10:21 AM', overdue: '18m' },
@@ -97,52 +95,20 @@ export default function LibrarianPage() {
   ]);
 
   const handleRelease = (id: string) => {
-    releaseDesk(id); // Releases the backend state if valid
+    releaseDesk(id);
     setFlaggedDesks(prev => prev.filter(d => d.id !== id));
   };
 
   return (
     <div className="min-h-screen bg-[#F9F8F6] text-[#2B2D2F] font-sans pb-20 overflow-x-hidden">
-      {/* TopNavBar */}
-      <div className="relative flex h-auto w-full flex-col bg-white shadow-[0_12px_24px_rgba(28,45,66,0.08)] mb-8">
-        <div className="px-8 md:px-20 lg:px-40 flex flex-1 justify-center py-0">
-          <div className="flex flex-col w-full max-w-[1200px] flex-1">
-            <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#f0f2f4] py-4">
-              <div className="flex items-center gap-4 text-[#1C2D42]">
-                <div className="w-6 h-6">
-                  <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
-                  </svg>
-                </div>
-                <h2 className="text-[#1C2D42] font-serif text-2xl font-semibold leading-tight tracking-[-0.015em]">DeskGuard Staff</h2>
-              </div>
-              <div className="flex flex-1 justify-end gap-8">
-                <div className="flex items-center gap-9">
-                  <a className="text-[#2B2D2F] text-sm font-bold leading-normal border-b-2 border-[#1C2D42] pb-1" href="#">Floor 1</a>
-                  <button 
-                    onClick={() => {
-                      logout();
-                      router.push('/');
-                    }}
-                    className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium leading-normal"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            </header>
-          </div>
-        </div>
-      </div>
-
-      <main className="max-w-[1200px] mx-auto px-8 md:px-20 lg:px-40">
+      <main className="max-w-[1200px] mx-auto px-8 md:px-20 lg:px-40 pt-8">
         {/* Floor Header & Metrics */}
         <div className="mb-10">
           <h1 className="font-serif text-4xl font-semibold text-[#1C2D42] mb-6">Floor 1 Overview</h1>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex flex-col gap-2 rounded-[24px] p-6 bg-white shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent hover:border-[#6B8E7B]/20 transition-colors">
               <p className="text-[#8FA396] text-sm font-medium leading-normal">Capacity</p>
-              <p className="text-[#1C2D42] font-serif text-3xl font-semibold">{(activeDesksCount/desks.length * 100).toFixed(0)}%</p>
+              <p className="text-[#1C2D42] font-serif text-3xl font-semibold">{(activeDesksCount/Math.max(desks.length,1) * 100).toFixed(0)}%</p>
             </div>
             <div className="flex flex-col gap-2 rounded-[24px] p-6 bg-white shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent hover:border-[#6B8E7B]/20 transition-colors">
               <p className="text-[#8FA396] text-sm font-medium leading-normal">Active</p>
@@ -174,7 +140,7 @@ export default function LibrarianPage() {
         {flaggedDesks.length > 0 ? (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
             {flaggedDesks.map(desk => (
-              <div key={desk.id} className="break-inside-avoid bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] relative overflow-hidden transition-all duration-300">
+              <div key={desk.id} className="break-inside-avoid bg-white rounded-[24px] shadow-[0_12px_24px_rgba(28,45,66,0.08)] border border-transparent relative overflow-hidden transition-all duration-300">
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#D69F4C]"></div>
                 <div className="p-6 pl-8">
                   <div className="flex justify-between items-start mb-4">

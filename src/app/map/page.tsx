@@ -26,6 +26,7 @@ function FloorMapPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDesk, setSelectedDesk] = useState<Desk | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
 
   // Sync floor from URL on mount
   useEffect(() => {
@@ -61,11 +62,17 @@ function FloorMapPage() {
     });
   }, [desks]);
 
-  const handleBook = () => {
-    if (!selectedDesk || activeSession) return;
-    bookDesk(selectedDesk.id);
-    setSelectedDesk(null);
-    router.push('/session');
+  const handleBook = async () => {
+    if (!selectedDesk || activeSession || isBooking) return;
+    setIsBooking(true);
+    const success = await bookDesk(selectedDesk.id);
+    setIsBooking(false);
+    if (success) {
+      setSelectedDesk(null);
+      router.push('/session');
+    } else {
+      alert("Failed to book the desk. Someone might have just taken it!");
+    }
   };
 
   const handleDeskClick = (desk: Desk) => {
@@ -364,10 +371,20 @@ function FloorMapPage() {
                 ) : selectedDesk.status === 'available' ? (
                   <button
                     onClick={handleBook}
-                    className="w-full py-3 bg-desk-amber hover:bg-amber-500 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
+                    disabled={isBooking}
+                    className={`w-full py-3 bg-desk-amber hover:bg-amber-500 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 ${isBooking ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    Book This Seat
-                    <ChevronRight className="w-4 h-4" />
+                    {isBooking ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Booking...
+                      </>
+                    ) : (
+                      <>
+                        Book This Seat
+                        <ChevronRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 ) : (
                   <button
